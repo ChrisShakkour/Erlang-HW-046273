@@ -17,17 +17,17 @@
 
 % Area function of a rectangle:
 area({rectangle, {dim, Width, Height}})     
-    when Width > 0 andalso Height  > 0
+    when (Width>0) and (Height>0)
     -> Width * Height;
 
 % Area function of a triangle:
 area({triangle, {dim, Base, Height}})
-    when Base > 0 andalso Height  > 0
+    when (Base>0) and (Height>0)
     -> Base * Height * 0.5;
 
 % Area function of a ellipse:
 area({ellipse, {radius, Radius1, Radius2}})
-    when Radius1 > 0 andalso Radius2 > 0
+    when (Radius1>0) and (Radius2>0)
     -> math:pi() * Radius1 * Radius2.
 
 % wrapper function to call shapesArea
@@ -38,34 +38,55 @@ shapesArea({shapes, [HEAD | TAIL]}, SUM)
     -> shapesArea({shapes, TAIL}, SUM + area(HEAD)).
 
 squaresArea({shapes, LIST})   
-    -> shapesArea(filterSquare({shapes, LIST})).
+    -> shapesArea({shapes,lists:filter(fun sqrFilter/1,LIST)}).
 
 trianglesArea({shapes, LIST}) 
-    -> shapesArea(filterTriangle({shapes, LIST})).
+    -> shapesArea({shapes,lists:filter(fun triFilter/1,LIST)}).
 
-filterRectangle({shapes, LIST}) 
-    -> {shapes, [FLIST || {rectangle,_}=FLIST <- LIST]}.
+recFilter({Type, {Dim, Width, Height}}) 
+    when Width > 0 andalso Height > 0 
+    andalso (
+        (Type == rectangle andalso Dim == dim) 
+        or (Type == triangle andalso Dim == dim) 
+        or (Type == ellipse andalso Dim == radius)
+    ) -> Type =:= rectangle.
 
-filterEllipse({shapes, LIST}) 
-    -> {shapes, [FLIST || {ellipse,_}=FLIST <- LIST]}.
+triFilter({Type, {Dim, Width, Height}}) 
+    when Width > 0 andalso Height > 0 
+    andalso (
+        (Type == rectangle andalso Dim == dim) 
+        or (Type == triangle andalso Dim == dim) 
+        or (Type == ellipse andalso Dim == radius)
+    ) -> Type =:= triangle.
 
-filterTriangle({shapes, LIST}) 
-    -> {shapes, [FLIST || {triangle,_}=FLIST <- LIST]}.
+eliFilter({Type, {Radius, Radius1, Radius2}}) 
+    when Radius1 > 0 andalso Radius2 > 0 
+    andalso (
+        (Type == rectangle andalso Radius == dim) 
+        or (Type == triangle andalso Radius == dim) 
+        or (Type == ellipse andalso Radius == radius)
+    ) -> Type =:= ellipse.
 
-filterSquare({shapes, LIST})
-    -> {shapes, [FLIST || {rectangle,{dim,X,X}}=FLIST <- LIST]}.
+circFilter({Type, {Radius, Radius1, Radius2}}) 
+    when Radius1 > 0 andalso Radius2 > 0 
+    andalso (
+        (Type == rectangle andalso Radius == dim) 
+        or (Type == triangle andalso Radius == dim) 
+        or (Type == ellipse andalso Radius == radius)
+    ) -> Type =:= ellipse andalso Radius1 =:= Radius2.
 
-filterCircle({shapes, LIST})
-    -> {shapes, [FLIST || {ellipse,{dim,X,X}}=FLIST <- LIST]}.
+sqrFilter({Type, {Dim, Width, Height}}) 
+    when Width > 0 andalso Height > 0 
+    andalso (
+        (Type == rectangle andalso Dim == dim) 
+        or (Type == triangle andalso Dim == dim) 
+        or (Type == ellipse andalso Dim == radius)
+    ) -> Type =:= rectangle andalso Width =:= Height.
 
-% Filter functions of Type1:
-shapesFilter(rectangle) -> fun filterRectangle/1;
-shapesFilter(ellipse)   -> fun filterEllipse/1;
-shapesFilter(triangle)  -> fun filterTriangle/1.
+shapesFilter(rectangle) -> fun({shapes,LIST}) -> {shapes,lists:filter(fun recFilter/1,LIST)} end;
+shapesFilter(triangle)  -> fun({shapes,LIST}) -> {shapes,lists:filter(fun triFilter/1,LIST)} end;
+shapesFilter(ellipse)   -> fun({shapes,LIST}) -> {shapes,lists:filter(fun eliFilter/1,LIST)} end.
 
-% Filter functions of type2:
-shapesFilter2(rectangle) -> fun filterRectangle/1;
-shapesFilter2(ellipse)   -> fun filterEllipse/1;
-shapesFilter2(triangle)  -> fun filterTriangle/1;
-shapesFilter2(square)    -> fun filterSquare/1;
-shapesFilter2(circle)    -> fun filterCircle/1.
+shapesFilter2(circle) -> fun({shapes,LIST}) -> {shapes,lists:filter(fun circFilter/1,LIST)} end;
+shapesFilter2(square) -> fun({shapes,LIST}) -> {shapes,lists:filter(fun sqrFilter/1,LIST)} end;
+shapesFilter2(Type)   -> shapesFilter(Type).
