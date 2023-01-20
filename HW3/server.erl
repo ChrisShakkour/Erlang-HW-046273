@@ -9,19 +9,6 @@ init (_Args) ->
 	process_flag(trap_exit, true) ,
 	{ok, 0}.
 
-handle_call (numberOfRunningFunctions, _From, State) ->
-	{reply, State, State}.
-
-handle_cast ({From, Fun, MsgRef}, State) ->
-	spawn_link(?MODULE, processFun, [From, Fun, MsgRef, self()]),
-	{noreply,State+1};
-handle_cast (finished, State) ->
-	{noreply,State-1}.
-	
-handle_info (_Info, State) -> {noreply, State}.
-terminate (_Reason, _State) -> ok.
-code_change (_OldVsn, State, _Extra) -> {ok, State}.
-
 start_link () ->
 	Name = getFreeServer(),
 	gen_server:start_link ({local, Name}, ?MODULE, [], []).
@@ -52,6 +39,19 @@ isRunning(Id)->
 	
 getFreeServer()->
 	getServer(hd([Id||Id<-lists:seq(1,3), isRunning(Id)])).
+
+handle_call (numberOfRunningFunctions, _From, State) ->
+	{reply, State, State}.
+
+handle_cast ({From, Fun, MsgRef}, State) ->
+	spawn_link(?MODULE, processFun, [From, Fun, MsgRef, self()]),
+	{noreply,State+1};
+handle_cast (finished, State) ->
+	{noreply,State-1}.
+	
+handle_info (_Info, State) -> {noreply, State}.
+terminate (_Reason, _State) -> ok.
+code_change (_OldVsn, State, _Extra) -> {ok, State}.
 
 
 
