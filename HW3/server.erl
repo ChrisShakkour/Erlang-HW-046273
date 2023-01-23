@@ -5,6 +5,12 @@
 -export ([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 -export([numberOfRunningFunctions/1, calcFun/4, processFun/4]).
 
+isRunning(Id)->
+	undefined==whereis(getServer(Id)).
+	
+getFreeServer()->
+	getServer(hd([Id||Id<-lists:seq(1,3), isRunning(Id)])).
+
 init (_Args) -> 
 	process_flag(trap_exit, true) ,
 	{ok, 0}.
@@ -33,12 +39,6 @@ calcFun(From, Fun, MsgRef, Id)->
 	Name = getServer(Id),
 	gen_server:cast(Name,{From, Fun, MsgRef}),
 	ok.
-		
-isRunning(Id)->
-	undefined==whereis(getServer(Id)).
-	
-getFreeServer()->
-	getServer(hd([Id||Id<-lists:seq(1,3), isRunning(Id)])).
 
 handle_call (numberOfRunningFunctions, _From, State) ->
 	{reply, State, State}.
